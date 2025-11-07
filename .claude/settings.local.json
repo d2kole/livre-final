@@ -28,7 +28,10 @@
       "Bash(dir /b)",
       "Bash(test:*)",
       "Bash(dir /b \"c:\\Users\\d2kol\\Documents\\ucf_folder\\ucf-finalproject\\src\\pages\")",
-      "Bash(dir /b \"c:\\Users\\d2kol\\Documents\\ucf_folder\\ucf-finalproject\\src\\store\")"
+      "Bash(dir /b \"c:\\Users\\d2kol\\Documents\\ucf_folder\\ucf-finalproject\\src\\store\")",
+      "Bash(dir /b \"c:\\Users\\d2kol\\Documents\\ucf_folder\\ucf-finalproject\")",
+      "Bash(dir:*)",
+      "Bash(git log:*)"
     ],
     "deny": [],
     "ask": []
