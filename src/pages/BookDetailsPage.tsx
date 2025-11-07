@@ -1,7 +1,5 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useState } from 'react';
 import { useBookStore } from '../store/books';
-import { useUserStore } from '../store/user';
 import { ReadingStatus } from '../types';
 
 /**
@@ -26,7 +24,6 @@ export default function BookDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { books, updateBookStatus } = useBookStore();
-  const { user } = useUserStore();
 
   // Find the book by ID
   const book = books.find(b => b.id === id);
