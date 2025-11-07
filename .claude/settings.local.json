@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create:*)",
+      "Bash(npm install)",
+      "Bash(npm install:*)",
+      "Bash(npx tailwindcss init -p)",
+      "Bash(node node_modules/tailwindcss/lib/cli.js:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git remote add:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(npm run build:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(git config:*)",
+      "Bash(dir)",
+      "Bash(cat:*)",
+      "Bash(npx tsc:*)",
+      "Bash(node -e:*)",
+      "Bash(mkdir:*)",
+      "Bash(touch:*)",
+      "Bash(dir /b c:Usersd2kolDocumentsucf_folderucf-finalproject)",
+      "Bash(npm test:*)",
+      "Bash(npm run dev:*)",
+      "Bash(dir /b \"c:\\Users\\d2kol\\Documents\\ucf_folder\\ucf-finalproject\\src\")",
+      "Bash(dir /b)",
+      "Bash(test:*)",
+      "Bash(dir /b \"c:\\Users\\d2kol\\Documents\\ucf_folder\\ucf-finalproject\\src\\pages\")",
+      "Bash(dir /b \"c:\\Users\\d2kol\\Documents\\ucf_folder\\ucf-finalproject\\src\\store\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
