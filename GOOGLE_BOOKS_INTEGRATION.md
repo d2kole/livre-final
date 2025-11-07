@@ -6,7 +6,7 @@
 
 1. **`.env`** - Environment configuration with API credentials
    ```
-   VITE_GOOGLE_BOOKS_API_KEY="AIzaSyBL10QAv9Q3WJZukAi4kj0E0uSd1oENPxk"
+   VITE_GOOGLE_BOOKS_API_KEY="your-api-key-here"
    VITE_GOOGLE_BOOKS_BASE_URL=https://www.googleapis.com/books/v1
    ```
 
