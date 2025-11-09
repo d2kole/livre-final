@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { BookCollectionState, Book, ReadingStatus } from '../types';
+import { BookCollectionState, Book, ReadingStatus, NotificationType } from '../types';
+import { useNotificationStore } from './notifications';
 
 /**
  * Zustand store for book collection management
@@ -34,11 +35,27 @@ export const useBookStore = create<BookCollectionState>()(
        * Update book reading status
        */
       updateBookStatus: (bookId: string, status: ReadingStatus) => {
-        set((state) => ({
-          books: state.books.map((book) =>
-            book.id === bookId ? { ...book, status } : book
-          ),
-        }));
+        set((state) => {
+          const book = state.books.find((b) => b.id === bookId);
+
+          // Trigger notification when book is marked as read
+          if (book && status === ReadingStatus.Read && book.status !== ReadingStatus.Read) {
+            const { addNotification } = useNotificationStore.getState();
+            addNotification({
+              type: NotificationType.BookRead,
+              title: 'Book Completed! 🎉',
+              message: `You finished reading "${book.title}"`,
+              bookId: book.id,
+              bookTitle: book.title,
+            });
+          }
+
+          return {
+            books: state.books.map((b) =>
+              b.id === bookId ? { ...b, status } : b
+            ),
+          };
+        });
       },
 
       /**
