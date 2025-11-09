@@ -12,6 +12,10 @@ export type { User, UserState } from './user';
 // Feed types
 export type { FeedPost, Comment, FeedState } from './feed';
 
+// Notification types
+export type { Notification, NotificationState } from './notification';
+export { NotificationType } from './notification';
+
 // Re-export Zod schemas and their inferred types
 export {
   BookSchema,
