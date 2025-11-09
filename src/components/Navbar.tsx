@@ -1,8 +1,12 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useUserStore } from '../store/user';
 import { useNotificationStore } from '../store/notifications';
+import { useBookStore } from '../store/books';
 import NotificationDropdown from './NotificationDropdown';
+import { searchBooks } from '../services/googleBooks';
+import { useDebounce } from '../hooks/useDebounce';
+import { Book, ReadingStatus } from '../types';
 
 /**
  * Navbar component
@@ -13,14 +17,69 @@ export default function Navbar() {
   const navigate = useNavigate();
   const { user, logout } = useUserStore();
   const { unreadCount } = useNotificationStore();
+  const { addBook } = useBookStore();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+
+  // Search functionality
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Book[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  // Debounce search query
+  const debouncedQuery = useDebounce(searchQuery, 300);
 
   const isActive = (path: string) => location.pathname === path;
 
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  // Perform search when debounced query changes
+  useEffect(() => {
+    const performSearch = async () => {
+      if (!debouncedQuery.trim()) {
+        setSearchResults([]);
+        setShowSearchResults(false);
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+        const results = await searchBooks(debouncedQuery, 8);
+        setSearchResults(results);
+        setShowSearchResults(true);
+      } catch (error) {
+        console.error('Search error:', error);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    performSearch();
+  }, [debouncedQuery]);
+
+  // Close search dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSearchResults(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleAddBook = (book: Book) => {
+    addBook({ ...book, status: ReadingStatus.WantToRead });
+    setSearchQuery('');
+    setShowSearchResults(false);
+    navigate('/my-books');
   };
 
   const navLinks = [
@@ -76,26 +135,127 @@ export default function Navbar() {
       {/* Right Side: Search, Notifications, User Profile */}
       <div className="flex flex-1 justify-end items-center gap-3 lg:gap-4">
         {/* Search Bar - Hidden on small screens */}
-        <label className="hidden lg:flex flex-col min-w-40 h-10 max-w-64">
-          <div className="flex w-full flex-1 items-stretch rounded-xl h-full">
-            <div className="text-[#4e8b97] flex border-none bg-[#e7f1f3] items-center justify-center pl-4 rounded-l-xl border-r-0">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20px"
-                height="20px"
-                fill="currentColor"
-                viewBox="0 0 256 256"
-              >
-                <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z" />
-              </svg>
+        <div ref={searchRef} className="hidden lg:flex relative min-w-40 max-w-64">
+          <label className="flex flex-col h-10 w-full">
+            <div className="flex w-full flex-1 items-stretch rounded-xl h-full">
+              <div className="text-[#4e8b97] flex border-none bg-[#e7f1f3] items-center justify-center pl-4 rounded-l-xl border-r-0">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20px"
+                  height="20px"
+                  fill="currentColor"
+                  viewBox="0 0 256 256"
+                >
+                  <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                placeholder="Search books..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => searchQuery && setShowSearchResults(true)}
+                className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-[#0e191b] focus:outline-0 focus:ring-0 border-none bg-[#e7f1f3] focus:border-none h-full placeholder:text-[#4e8b97] px-4 rounded-l-none border-l-0 pl-2 text-sm font-normal leading-normal"
+                aria-label="Search for books"
+              />
+              {isSearching && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <svg
+                    className="animate-spin h-4 w-4 text-[#4e8b97]"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                </div>
+              )}
             </div>
-            <input
-              type="text"
-              placeholder="Search"
-              className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-[#0e191b] focus:outline-0 focus:ring-0 border-none bg-[#e7f1f3] focus:border-none h-full placeholder:text-[#4e8b97] px-4 rounded-l-none border-l-0 pl-2 text-sm font-normal leading-normal"
-            />
-          </div>
-        </label>
+          </label>
+
+          {/* Search Results Dropdown */}
+          {showSearchResults && (
+            <div className="absolute top-full mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-y-auto">
+              {searchResults.length > 0 ? (
+                <div className="py-2">
+                  {searchResults.map((book) => (
+                    <div
+                      key={book.id}
+                      className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                      onClick={() => handleAddBook(book)}
+                    >
+                      <div className="flex gap-3">
+                        {book.thumbnail ? (
+                          <img
+                            src={book.thumbnail}
+                            alt={book.title}
+                            className="w-12 h-16 object-cover rounded"
+                          />
+                        ) : (
+                          <div className="w-12 h-16 bg-gray-200 rounded flex items-center justify-center">
+                            <svg
+                              className="w-6 h-6 text-gray-400"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                              />
+                            </svg>
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-semibold text-gray-900 truncate">
+                            {book.title}
+                          </h4>
+                          <p className="text-xs text-gray-600 truncate">
+                            {book.authors.join(', ')}
+                          </p>
+                          <p className="text-xs text-[#2E8B57] mt-1">
+                            Click to add to My Books
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {searchQuery && (
+                    <Link
+                      to="/browse"
+                      className="block px-4 py-3 text-center text-sm text-[#2E8B57] hover:bg-gray-50 font-medium border-t border-gray-200"
+                      onClick={() => {
+                        setShowSearchResults(false);
+                        setSearchQuery('');
+                      }}
+                    >
+                      View all results in Browse
+                    </Link>
+                  )}
+                </div>
+              ) : searchQuery.trim() && !isSearching ? (
+                <div className="px-4 py-8 text-center text-gray-500">
+                  <p className="text-sm">No books found</p>
+                  <p className="text-xs mt-1">Try a different search term</p>
+                </div>
+              ) : null}
+            </div>
+          )}
+        </div>
 
         {/* Notifications Button - Hidden on small screens */}
         <div className="relative hidden sm:block">
